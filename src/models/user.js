@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Feedback, { foreignKey: "user_id" });
       // Liên kết với Role (1-1)
       User.belongsTo(models.Role, { foreignKey: "role_id" });
+
+      //chức năng chat 
+      User.hasMany(models.Message, { foreignKey: "sender_id", as: "sentMessages" });
+      User.hasMany(models.Message, { foreignKey: "receiver_id", as: "receivedMessages" });
     }
   }
   User.init(

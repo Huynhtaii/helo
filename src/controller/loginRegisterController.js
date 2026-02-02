@@ -144,6 +144,7 @@ const getAccount = async (req, res) => {
       EM: "Get User Account OK!",
       EC: "0",
       DT: {
+         id: req.user.id,
          email: req.user.email,
          username: req.user.name,
          role_id: req.user.role_id.toString(),

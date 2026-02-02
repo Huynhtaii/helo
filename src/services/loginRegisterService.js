@@ -68,6 +68,7 @@ const handleLogin = async (rawData) => {
          };
       }
       const payload = {
+         id: user.user_id,
          email: user.email,
          name: user.name,
          role_id: user.role_id,
@@ -77,7 +78,7 @@ const handleLogin = async (rawData) => {
          EM: 'Login successfully',
          EC: '0',
          DT: {
-            user_id: user.user_id,
+            id: user.user_id,
             email: user.email,
             name: user.name,
             role_id: user.role_id.toString(),
