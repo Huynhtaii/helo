@@ -28,29 +28,51 @@ app.use(cookieParser());
 // Phục vụ tĩnh thư mục uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Tạo instance Socket.IO với CORS
 const io = new Server(server, {
    cors: {
-      origin: process.env.REACT_URL || "http://localhost:3000",   
+      origin: process.env.REACT_URL || "http://localhost:3000",
       methods: ["GET", "POST"],
       credentials: true
-   }
+   },
+   pingTimeout: 60000,
+   pingInterval: 25000
 });
 
-// Lắng nghe sự kiện kết nối từ client
+// server.js
+// server.js
 io.on("connection", (socket) => {
    console.log("🟢 User connected:", socket.id);
 
+   socket.on("joinRoom", (userId) => {
+      if (userId) {
+         const roomId = userId.toString();
+         socket.join(roomId);
+         console.log(`User ${socket.id} joined room ${roomId}`);
+      }
+   });
+
    socket.on("sendMessage", (data) => {
-      console.log("📩 Message:", data);
-      io.emit("receiveMessage", data);
+      try {
+         console.log("📩 Message received:", data);
+         
+         // Đảm bảo sender_id và receiver_id là string
+         const senderId = data.sender_id.toString();
+         const receiverId = data.receiver_id.toString();
+         
+         // Broadcast tin nhắn đến tất cả client trong room
+         socket.broadcast.to(receiverId).emit("receiveMessage", data);
+         socket.broadcast.to(senderId).emit("receiveMessage", data);
+         
+         console.log(`Message broadcasted to rooms ${senderId} and ${receiverId}`);
+      } catch (error) {
+         console.error("Error handling message:", error);
+      }
    });
 
    socket.on("disconnect", () => {
       console.log("🔴 User disconnected:", socket.id);
    });
 });
-
 // Kết nối Database
 Connection();
 

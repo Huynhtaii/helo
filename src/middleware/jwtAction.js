@@ -17,6 +17,9 @@ const nonSecurePaths = [
    "/getChatHistory/:userId", // Lấy lịch sử chat
    "/sendMessage", // Gửi tin nhắn mới
    "/getAllChat", // Lấy tất cả chat của user chat vs admin
+
+   //API để test thanh toán ngân hàng, tạm thời mở khóa
+   "/create/order",
 ];
 
 const apiPrefix = "/api/v1";

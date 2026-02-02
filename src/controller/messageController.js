@@ -67,10 +67,54 @@ const getAllChat = async (req, res) => {
         });
     }
 };
+const getUnreadCounts = async (req, res) => {
+    try {
+        const data = await messageService.getUnreadCounts();
+        return res.status(200).json({
+            EM: data.EM,
+            EC: data.EC,
+            DT: data.DT
+        });
+    } catch (error) {
+        console.log("Error in getUnreadCounts controller:", error);
+        return res.status(500).json({
+            EM: "Lỗi server",
+            EC: -1,
+            DT: []
+        });
+    }
+};
+const markAsRead = async (req, res) => {
+    try {
+        const { userId } = req.params;
 
+        if (!userId) {
+            return res.status(400).json({
+                EM: "Missing userId parameter",
+                EC: -1,
+                DT: []
+            });
+        }
 
+        const data = await messageService.markAsRead(userId);
+        return res.status(200).json({
+            EM: data.EM,
+            EC: data.EC,
+            DT: data.DT
+        });
+    } catch (error) {
+        console.log("Error in markAsRead controller:", error);
+        return res.status(500).json({
+            EM: "Lỗi server",
+            EC: -1,
+            DT: []
+        });
+    }
+};
 export default {
     getChatHistory,
     sendMessage,
-    getAllChat
+    getAllChat,
+    getUnreadCounts,
+    markAsRead
 };

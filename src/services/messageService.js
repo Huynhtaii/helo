@@ -1,6 +1,7 @@
 import db from "../models";
 import { Op } from "sequelize"; // Bổ sung import Op từ Sequelize
-
+import dotenv from "dotenv";
+dotenv.config();
 const getChatHistory = async (userId) => {
     try {
         const messages = await db.Message.findAll({
@@ -90,9 +91,73 @@ const getAllChat = async () => {
         };
     }
 };
+const getUnreadCounts = async () => {
+    try {
+        // Đếm số tin nhắn chưa đọc (status = 'Sent' hoặc 'Delivered')
+        const unreadCounts = await db.Message.count({
+            where: {
+                status: {
+                    [Op.in]: ['Sent', 'Delivered']
+                }
+            },
+            group: ['receiver_id'],
+            include: [
+                {
+                    model: db.User,
+                    as: 'receiver',
+                    attributes: ['user_id', 'name', 'email']
+                }
+            ]
+        });
+
+        return {
+            EM: "Lấy số tin nhắn chưa đọc thành công",
+            EC: 0,
+            DT: unreadCounts
+        };
+    } catch (error) {
+        console.log("Error in getUnreadCounts:", error);
+        return {
+            EM: "Lỗi server",
+            EC: -1,
+            DT: []
+        };
+    }
+};
+const markAsRead = async (userId) => {
+    try {
+        // Cập nhật tất cả tin nhắn chưa đọc của user thành 'Seen'
+        const result = await db.Message.update(
+            { status: 'Seen' },
+            {
+                where: {
+                    receiver_id: userId,
+                    status: {
+                        [Op.in]: ['Sent', 'Delivered']
+                    }
+                }
+            }
+        );
+
+        return {
+            EM: "Đánh dấu tin nhắn đã đọc thành công",
+            EC: 0,
+            DT: result
+        };
+    } catch (error) {
+        console.log("Error in markAsRead:", error);
+        return {
+            EM: "Lỗi server",
+            EC: -1,
+            DT: []
+        };
+    }
+};
 
 export default {
     getChatHistory,
     sendMessage,
-    getAllChat
+    getAllChat,
+    getUnreadCounts,
+    markAsRead
 };

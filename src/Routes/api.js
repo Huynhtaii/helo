@@ -23,6 +23,9 @@ const initAPIRoutes = (app) => {
    router.get('/getChatHistory/:userId', messageController.getChatHistory);  // Lấy lịch sử chat
    router.post('/sendMessage', messageController.sendMessage);  // Gửi tin nhắn mới
    router.get('/getAllChat', messageController.getAllChat);  // Lấy tất cả chat của user chat vs admin
+   // router.get('/getUnreadCounts', messageController.getUnreadCounts);  // Lấy số tin nhắn chưa đọc
+   // router.post('/markAsRead/:userId', messageController.markAsRead);  // Đánh dấu tin nhắn đã đọc
+   
    // AUTH ROUTES
    router.post('/register/user', loginRegisterController.handleRegister);
    router.post('/login/user', loginRegisterController.handleLogin);

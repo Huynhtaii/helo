@@ -55,28 +55,66 @@ const getOrderById = async (id) => {
 };
 const createOrder = async (data) => {
    try {
-      const order = await db.Order.create(data);
+      // ✅ Đổi `data.products` thành `data.items`
+      if (!data.items || !Array.isArray(data.items)) {
+         return {
+            EM: "Invalid items data",
+            EC: "-1",
+            DT: "",
+         };
+      }
+
+      // ✅ Đổi `data.products.map(...)` thành `data.items.map(...)`
+      const productIds = data.items.map((p) => p.product_id);
+      const products = await db.Product.findAll({
+         where: { product_id: productIds },
+         attributes: ["product_id", "price"],
+      });
+
+      // ✅ Đổi `data.products.forEach(...)` thành `data.items.forEach(...)`
+      let totalAmount = 0;
+      data.items.forEach((item) => {
+         const product = products.find((p) => p.product_id === item.product_id);
+         if (product) {
+            totalAmount += product.price * item.quantity;
+         }
+      });
+
+      // Tạo đơn hàng
+      const newOrder = {
+         user_id: data.user_id,
+         order_date: new Date(),
+         total_amount: totalAmount,
+         status: data.status || "Pending",
+      };
+
+      const order = await db.Order.create(newOrder);
+
       if (!order) {
          return {
-            EM: 'create order fail',
-            EC: '0',
+            EM: "Create order failed",
+            EC: "1",
             DT: [],
          };
       }
+
       return {
-         EM: 'Create order success',
-         EC: '0',
+         EM: "Create order success",
+         EC: "0",
          DT: order,
       };
    } catch (error) {
       console.log(error);
       return {
-         EM: 'error from service',
-         EC: '-1',
-         DT: '',
+         EM: "Error from service",
+         EC: "-1",
+         DT: "",
       };
    }
 };
+
+
+
 const updateOrder = async (id, data) => {
    try {
       const order = await db.Order.findByPk(id);
