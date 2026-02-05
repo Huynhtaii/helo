@@ -2,9 +2,10 @@ import db from '../models/index';
 const getAllOrders = async () => {
    try {
       const orders = await db.Order.findAll({
-         include:[
+         include: [
             {
-               model:db.OrderItem
+               model: db.OrderItem,
+               as: 'order_items'
             }
          ]
       });
