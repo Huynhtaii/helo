@@ -58,6 +58,7 @@ const getCartByUserId = async (user_id) => {
 
 const createCartItem = async (user_id, data) => {
     try {
+
         // Kiểm tra xem user_id có tồn tại trong bảng Cart không
         const cart = await db.Cart.findOne({
             where: { user_id: user_id }

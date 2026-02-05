@@ -27,14 +27,22 @@ const handleRegister = async (rawData) => {
          };
       }
       let hasPassword = hashUserPassword(rawData.password);
-      await db.User.create({
+      const newUser = await db.User.create({
          name: rawData.name,
          email: rawData.email,
          password: hasPassword,
          phone: rawData.phone || null,
          address: rawData.address || null,
+         created_at: new Date().toISOString(),
          role_id: 2,
       });
+
+      await db.Cart.create({
+         user_id: newUser.user_id,
+         created_at: new Date().toISOString(),
+         updated_at: new Date().toISOString(),
+      });
+
       return {
          EM: 'Register successfully',
          EC: '0',
