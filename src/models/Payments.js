@@ -19,7 +19,8 @@ module.exports = (sequelize, DataTypes) => {
       payment_method: DataTypes.ENUM(
         "Credit Card",
         "PayPal",
-        "COD",
+        "cod",
+        "qr_code",
         "Bank Transfer"
       ),
       status: DataTypes.ENUM("Success", "Failed", "Pending"),

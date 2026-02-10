@@ -13,11 +13,11 @@ module.exports = {
         allowNull: true,
       },
       amount: {
-        type: Sequelize.DECIMAL(10,2),
+        type: Sequelize.DECIMAL(10, 2),
         allowNull: false,
       },
       payment_method: {
-        type: Sequelize.ENUM("Credit Card", "PayPal", "COD", "Bank Transfer"),
+        type: Sequelize.ENUM("Credit Card", "PayPal", "cod", "qr_code", "Bank Transfer"),
         allowNull: false,
       },
       status: {

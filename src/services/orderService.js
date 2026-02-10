@@ -1,32 +1,57 @@
 import db from '../models/index';
+import emailService from './emailService';
+
 const getAllOrders = async () => {
    try {
       const orders = await db.Order.findAll({
          include: [
             {
                model: db.OrderItem,
-               as: 'order_items'
+               as: 'order_items', // Thêm alias ở đây
+               include: [{
+                  model: db.Product,
+                  as: 'Product', // Thêm alias cho Product nếu có
+                  attributes: ['product_id', 'name', 'price', 'discount_price'],
+                  include: [{
+                     model: db.ProductImage,
+                     as: 'ProductImages', // Thêm alias cho ProductImage nếu có
+                     attributes: ['url'],
+                     limit: 1
+                  }]
+               }]
+            },
+            {
+               model: db.User,
+               as: 'User', // Thêm alias cho User
+               attributes: ['user_id', 'name', 'email', 'phone']
             }
-         ]
+         ],
+         order: [['order_date', 'DESC']]
       });
-      if (!orders) {
-         return {
-            EM: 'orders not found',
-            EC: '0',
-            DT: [],
-         };
-      }
+
+      // Tính toán thống kê
+      const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
+      const totalProducts = await db.Product.count();
+
       return {
-         EM: 'Get orders success',
-         EC: '0',
-         DT: orders,
+         EM: "Get orders success",
+         EC: "0",
+         DT: {
+            orders,
+            stats: {
+               totalRevenue,
+               totalOrders: orders.length,
+               totalProducts,
+               totalCustomers: new Set(orders.map(order => order.user_id)).size
+            }
+         }
       };
    } catch (error) {
-      console.log(error);
+      console.error('Error:', error);
       return {
-         EM: 'error from service',
-         EC: '-1',
-         DT: '',
+         EM: "Error getting orders",
+         EC: "1",
+         DT: []
       };
    }
 };
@@ -177,7 +202,25 @@ const updateOrder = async (id, data) => {
 };
 const updateOrderStatus = async (id, status) => {
    try {
-      const order = await db.Order.findByPk(id);
+      const order = await db.Order.findByPk(id, {
+         include: [
+            {
+               model: db.User,
+               as: 'User',
+               attributes: ['email', 'name']
+            },
+            {
+               model: db.OrderItem,
+               as: 'order_items',
+               include: [{
+                  model: db.Product,
+                  as: 'Product',
+                  attributes: ['name']
+               }]
+            }
+         ]
+      });
+
       if (!order) {
          return {
             EM: 'Order not found',
@@ -197,6 +240,17 @@ const updateOrderStatus = async (id, status) => {
 
       // Cập nhật trạng thái đơn hàng
       await order.update({ status });
+
+      // Gửi email thông báo
+      const orderDetails = {
+         order_id: order.order_id,
+         nameProduct: order.order_items.map(item => item.Product.name).join(', '),
+         order_date: order.order_date,
+         total_amount: order.total_amount,
+         status: status
+      };
+
+      await emailService.sendOrderStatusUpdate(order.User.email, orderDetails, status);
 
       return {
          EM: 'Update order status success',

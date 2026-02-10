@@ -1,10 +1,10 @@
 import db from '../models/index';
-
+import emailService from '../services/emailService';
 const updatePayment = async (data) => {
     let transaction;
     try {
         transaction = await db.sequelize.transaction();
-
+        console.log('data >>>>>>>>>>>>>>>>>>>>', data);
         // 1. Tạo order mới
         const newOrder = await db.Order.create({
             user_id: data.id,
@@ -18,7 +18,7 @@ const updatePayment = async (data) => {
             order_id: newOrder.order_id,
             product_id: item.product_id,
             quantity: item.quantity,
-            price: item.Product.discount_price, // Giả sử price được lấy từ Product object
+            price: item.Product.discount_price || item.Product.price,
         }));
 
         await db.OrderItem.bulkCreate(orderItems, { transaction });
@@ -36,12 +36,18 @@ const updatePayment = async (data) => {
             order_id: newOrder.order_id,
             payment_date: new Date(),
             amount: data.totalAmount,
-            payment_method: 'qr_code',
+            payment_method: data.paymentMethod,
             status: 'success'
         }, { transaction });
 
         await transaction.commit();
-
+        await emailService.sendOrderConfirmation(data.email, {
+            nameProduct: data.cartItem.map(item => item.Product.name + ' - Số Lượng: ' + item.quantity),
+            order_id: newOrder.order_id,
+            order_date: newOrder.order_date,
+            total_amount: data.totalAmount,
+            status: 'Shipped'
+        });
         return {
             EM: 'Payment processed successfully',
             EC: 0,
