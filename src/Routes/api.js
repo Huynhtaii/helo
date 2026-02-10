@@ -9,6 +9,7 @@ import loginRegisterController from '../controller/loginRegisterController';
 import jwtAction from '../middleware/jwtAction';
 import cartController from '../controller/cartController';
 import messageController from '../controller/messageController';
+import paymentController from '../controller/paymentController';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
@@ -25,7 +26,9 @@ const initAPIRoutes = (app) => {
    router.get('/getAllChat', messageController.getAllChat);  // Lấy tất cả chat của user chat vs admin
    // router.get('/getUnreadCounts', messageController.getUnreadCounts);  // Lấy số tin nhắn chưa đọc
    // router.post('/markAsRead/:userId', messageController.markAsRead);  // Đánh dấu tin nhắn đã đọc
-   
+   //API PAYMENT
+   router.post('/update-payment', paymentController.updatePayment);
+
    // AUTH ROUTES
    router.post('/register/user', loginRegisterController.handleRegister);
    router.post('/login/user', loginRegisterController.handleLogin);
@@ -64,6 +67,7 @@ const initAPIRoutes = (app) => {
    router.delete('/delete/order/:id', jwtAction.checkUserJWT, orderController.deleteOrder);
 
    router.get('/read-all/roles', jwtAction.checkUserJWT, roleCotroller.getAllRoles);
+
 
    return app.use('/api/v1/', router);
 };

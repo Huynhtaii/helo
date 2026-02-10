@@ -133,8 +133,6 @@ const updateInforAccount = async (req, res) => {
    }
 };
 const getAccount = async (req, res) => {
-   console.log(">>>>>>>>>>>>>>req.user:", req.user);
-   console.log("Authorization Header:", req.headers.authorization);
 
    if (!req.user) {
       return res.status(401).json({ EM: "User not authenticated", EC: -1, DT: "" });
