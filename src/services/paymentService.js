@@ -41,13 +41,25 @@ const updatePayment = async (data) => {
         }, { transaction });
 
         await transaction.commit();
-        await emailService.sendOrderConfirmation(data.email, {
-            nameProduct: data.cartItem.map(item => item.Product.name + ' - Số Lượng: ' + item.quantity),
-            order_id: newOrder.order_id,
-            order_date: newOrder.order_date,
-            total_amount: data.totalAmount,
-            status: 'Shipped'
-        });
+        if (data.paymentMethod === 'cod') {
+            await emailService.sendOrderConfirmation(data.email, {
+                nameProduct: data.cartItem.map(item => item.Product.name + ' - Số Lượng: ' + item.quantity),
+                order_id: newOrder.order_id,
+                order_date: newOrder.order_date,
+                total_amount: data.totalAmount,
+                status: 'Shipped'
+            }, data.paymentMethod);
+        }
+        if (data.paymentMethod === 'qr_code') {
+            await emailService.sendOrderConfirmation(data.email, {
+                nameProduct: data.cartItem.map(item => item.Product.name + ' - Số Lượng: ' + item.quantity),
+                order_id: newOrder.order_id,
+                order_date: newOrder.order_date,
+                total_amount: data.totalAmount,
+                status: 'Shipped'
+            }, data.paymentMethod);
+        }
+
         return {
             EM: 'Payment processed successfully',
             EC: 0,

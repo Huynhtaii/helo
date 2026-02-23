@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const sendOrderConfirmation = async (toEmail, orderDetails) => {
+const sendOrderConfirmation = async (toEmail, orderDetails, paymentMethod) => {
   try {
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -73,7 +73,11 @@ const sendOrderConfirmation = async (toEmail, orderDetails) => {
                   <p><strong>Tổng tiền:</strong> 
                     ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(orderDetails.total_amount)}
                   </p>
-                  <p><strong>Trạng thái:</strong> ${orderDetails.status} (Đã Thanh Toán, đang được gửi đi)</p>
+                  <p><strong>Trạng thái:</strong> 
+                    ${paymentMethod === "qr_code"
+          ? "Đã Thanh Toán, đang được gửi đi"
+          : "Chưa Thanh Toán (Thanh toán khi nhận hàng), đang được gửi đi"}
+                  </p>
                 </div>
                 <p>📦 Đơn hàng của bạn sẽ được giao sớm nhất trong những ngày tới. Vui lòng kiểm tra email để cập nhật thông tin giao hàng.</p>
                 <div class="footer">
