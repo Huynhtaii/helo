@@ -77,9 +77,7 @@ const getProductByCategoriesWithPaginate = async (req, res) => {
       const page = req.query.page;
       const limit = req.query.limit;
       const categoryName = req.query.categoryName;
-      const filter = req.query.filter
-      console.log(filter);
-      console.log(categoryName)
+      const filter = req.query.filter;
 
       if (page && limit) {
          let data = await productService.getProductByCategoriesWithPaginate(+page, +limit, categoryName, filter);
@@ -113,7 +111,7 @@ const createProduct = async (req, res) => {
          return res.status(400).json({
             EM: 'Vui lòng upload ảnh sản phẩm!',
             EC: '-1',
-            DT: ''
+            DT: '',
          });
       }
 
@@ -131,15 +129,15 @@ const createProduct = async (req, res) => {
          EC: data.EC,
          DT: {
             product: data.DT,
-            imageUrl: product.imageUrl
-         }
+            imageUrl: product.imageUrl,
+         },
       });
    } catch (error) {
       console.error('Create product error:', error);
       return res.status(500).json({
          EM: 'error from server',
          EC: '-1',
-         DT: ''
+         DT: '',
       });
    }
 };
@@ -147,6 +145,20 @@ const updateProduct = async (req, res) => {
    try {
       const { id } = req.params;
       const product = req.body;
+
+      // Chuyển đổi các giá trị từ string sang số nếu có
+      if (product.price) product.price = parseFloat(product.price);
+      if (product.discount_price) product.discount_price = parseFloat(product.discount_price);
+      if (product.rating) product.rating = parseInt(product.rating);
+      if (product.brand_id) product.brand_id = parseInt(product.brand_id);
+      if (product.category_id) product.category_id = parseInt(product.category_id);
+
+      // Nếu có file ảnh, tạo URL và thêm vào product
+      if (req.file) {
+         const imageUrl = `http://localhost:6969/uploads/product/${req.file.filename}`;
+         product.imageUrl = imageUrl;
+      }
+
       const data = await productService.updateProduct(id, product);
       return res.status(200).json({
          EM: data.EM,

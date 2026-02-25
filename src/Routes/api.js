@@ -21,9 +21,9 @@ const initAPIRoutes = (app) => {
    router.get('/product-search', productController.searchProduct);
    router.get('/read-product-by-categories/:name', productController.getProductByCategories);
    router.get('/read-product-by-categories-with-pagination', productController.getProductByCategoriesWithPaginate);
-   router.get('/getChatHistory/:userId', messageController.getChatHistory);  // Lấy lịch sử chat
-   router.post('/sendMessage', messageController.sendMessage);  // Gửi tin nhắn mới
-   router.get('/getAllChat', messageController.getAllChat);  // Lấy tất cả chat của user chat vs admin
+   router.get('/getChatHistory/:userId', messageController.getChatHistory); // Lấy lịch sử chat
+   router.post('/sendMessage', messageController.sendMessage); // Gửi tin nhắn mới
+   router.get('/getAllChat', messageController.getAllChat); // Lấy tất cả chat của user chat vs admin
    // router.get('/getUnreadCounts', messageController.getUnreadCounts);  // Lấy số tin nhắn chưa đọc
    // router.post('/markAsRead/:userId', messageController.markAsRead);  // Đánh dấu tin nhắn đã đọc
    //API PAYMENT
@@ -67,7 +67,6 @@ const initAPIRoutes = (app) => {
    router.delete('/delete/order/:id', jwtAction.checkUserJWT, orderController.deleteOrder);
 
    router.get('/read-all/roles', jwtAction.checkUserJWT, roleCotroller.getAllRoles);
-
 
    return app.use('/api/v1/', router);
 };

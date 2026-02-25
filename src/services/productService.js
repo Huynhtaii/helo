@@ -116,86 +116,89 @@ const getProductByCategories = async (name) => {
 const getResentProducts = async (arrId) => {
    try {
       if (!Array.isArray(arrId)) {
-         console.error("arrId không phải là một mảng hoặc bị undefined:", arrId);
+         console.error('arrId không phải là một mảng hoặc bị undefined:', arrId);
          return {
-            EM: "Invalid input data",
-            EC: "-1",
+            EM: 'Invalid input data',
+            EC: '-1',
             DT: [],
          };
       }
 
       const products = await db.Product.findAll({
-         include: [
-            { model: db.ProductImage },
-            { model: db.Category },
-         ],
+         include: [{ model: db.ProductImage }, { model: db.Category }],
       });
 
-      const recentProduct = products.filter((product) =>
-         arrId.includes(String(product.product_id))
-      );
+      const recentProduct = products.filter((product) => arrId.includes(String(product.product_id)));
 
       return {
-         EM: "Get product by categories success",
-         EC: "0",
+         EM: 'Get product by categories success',
+         EC: '0',
          DT: recentProduct,
       };
    } catch (error) {
       console.error(error);
       return {
-         EM: "error from service",
-         EC: "-1",
-         DT: "",
+         EM: 'error from service',
+         EC: '-1',
+         DT: '',
       };
    }
 };
-
 
 const getProductByCategoriesWithPaginate = async (page, limit, categoryName, filter) => {
    try {
       let offset = (page - 1) * limit;
 
       // Điều kiện lọc theo category (nếu không phải "all")
-      const whereCategory = categoryName !== "all" ? { name: categoryName } : {};
+      const catName = categoryName || 'all';
+      const whereCategory = catName !== 'all' ? { name: catName } : {};
 
       // Điều kiện lọc sản phẩm
       let whereProduct = {};
 
-      if (filter?.price !== "all") {
-         const priceS = filter.price.split('-')
-         whereProduct.price = {
-            [db.Sequelize.Op.between]: [priceS[0], priceS[1]], // Lọc theo khoảng giá
-         };
+      if (filter?.price && filter.price !== 'all') {
+         const priceS = filter.price.split('-');
+         if (priceS.length === 2) {
+            whereProduct.price = {
+               [db.Sequelize.Op.between]: [parseInt(priceS[0]), parseInt(priceS[1])],
+            };
+         } else {
+            // Trường hợp "Trên 20 triệu" (chỉ có 1 giá trị)
+            whereProduct.price = {
+               [db.Sequelize.Op.gte]: parseInt(priceS[0]),
+            };
+         }
       }
 
-      if (filter?.rating !== "all") {
+      if (filter?.rating && filter.rating !== 'all') {
          whereProduct.rating = {
-            [db.Sequelize.Op.eq]: parseInt(filter.rating), // Lọc sản phẩm có rating >= filter.rating
+            [db.Sequelize.Op.gte]: parseInt(filter.rating),
          };
       }
 
-      const { rows } = await db.Product.findAndCountAll({
+      const { count, rows } = await db.Product.findAndCountAll({
          where: whereProduct, // Áp dụng bộ lọc sản phẩm
          include: [
             {
                model: db.Category,
-               where: whereCategory,
-               required: categoryName !== "all",
+               ...(catName !== 'all' ? { where: whereCategory } : {}),
+               required: catName !== 'all',
             },
             {
                model: db.ProductImage,
-            }
+            },
          ],
          limit: limit,
          offset: offset,
+         distinct: true,
       });
 
       return {
          EM: 'Get all product successfully',
          EC: 0,
          DT: {
-            totalRows: rows.length,
-            totalPages: Math.ceil(rows.length / limit),
+            totalRows: count,
+            totalPages: Math.ceil(count / limit),
             product: rows,
          },
       };
@@ -224,6 +227,16 @@ const createProduct = async (product) => {
                created_at: product.created_at,
                brand_id: product.brand_id,
                sku: product.sku,
+               origin: product.origin,
+               target_audience: product.target_audience,
+               product_line: product.product_line,
+               water_resistance: product.water_resistance,
+               movement_type: product.movement_type,
+               glass_material: product.glass_material,
+               strap_material: product.strap_material,
+               case_size: product.case_size,
+               case_thickness: product.case_thickness,
+               utilities: product.utilities,
             },
             { transaction: t },
          );
@@ -240,10 +253,13 @@ const createProduct = async (product) => {
          }
 
          if (product.category_id) {
-            await db.CategoriesHasProducts.create({
-               categories_category_id: product.category_id,
-               products_product_id: newProduct.product_id,
-            }, { transaction: t });
+            await db.CategoriesHasProducts.create(
+               {
+                  categories_category_id: product.category_id,
+                  products_product_id: newProduct.product_id,
+               },
+               { transaction: t },
+            );
          }
 
          return newProduct;
@@ -308,23 +324,55 @@ const updateProduct = async (id, data) => {
          };
       }
 
-      // Cập nhật sản phẩm
-      const [affectedRows] = await db.Product.update(data, {
-         where: { product_id: id },
+      // Loại bỏ các trường mang giá trị undefined để tránh lỗi DB
+      const updateData = { ...data };
+      Object.keys(updateData).forEach((key) => {
+         if (updateData[key] === undefined || updateData[key] === 'undefined' || updateData[key] === null) {
+            delete updateData[key];
+         }
       });
 
-      // Cập nhật category_id nếu có
-      if (data.category_id) {
-         await db.CategoriesHasProducts.update(
-            { categories_category_id: data.category_id },
-            { where: { products_product_id: id } }
-         );
-      }
+      // Cập nhật sản phẩm
+      const result = await db.sequelize.transaction(async (t) => {
+         const [affectedRows] = await db.Product.update(updateData, {
+            where: { product_id: id },
+            transaction: t,
+         });
+
+         // Nếu có ảnh mới, xóa ảnh cũ và thêm ảnh mới
+         if (data.imageUrl) {
+            await db.ProductImage.destroy({
+               where: { product_id: id },
+               transaction: t,
+            });
+
+            await db.ProductImage.create(
+               {
+                  url: data.imageUrl,
+                  product_id: id,
+               },
+               { transaction: t },
+            );
+         }
+
+         // Cập nhật category_id nếu hợp lệ
+         if (updateData.category_id && !isNaN(updateData.category_id)) {
+            await db.CategoriesHasProducts.update(
+               { categories_category_id: updateData.category_id },
+               {
+                  where: { products_product_id: id },
+                  transaction: t,
+               },
+            );
+         }
+
+         return affectedRows;
+      });
 
       return {
          EM: 'Update product successfully',
          EC: '0',
-         DT: affectedRows,
+         DT: result,
       };
    } catch (error) {
       console.log(error);

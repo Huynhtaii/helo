@@ -1,7 +1,16 @@
 import db from '../models/index';
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(10);
+
+const hashUserPassword = (userPassword) => {
+   const hasPassword = bcrypt.hashSync(userPassword, salt);
+   return hasPassword;
+};
 const getAllUsers = async () => {
    try {
-      const users = await db.User.findAll();
+      const users = await db.User.findAll({
+         attributes: { exclude: ['password'] },
+      });
       if (!users) {
          return {
             EM: 'user not found',
@@ -25,8 +34,9 @@ const getAllUsers = async () => {
 };
 const getUserById = async (id) => {
    try {
-      console.log('>>>>>id', id);
-      const user = await db.User.findByPk(id);
+      const user = await db.User.findByPk(id, {
+         attributes: { exclude: ['password'] },
+      });
       if (!user) {
          return {
             EM: 'user not found',
@@ -51,11 +61,21 @@ const getUserById = async (id) => {
 };
 const createUser = async (data) => {
    try {
+      if (!data.role_id) {
+         return {
+            EM: 'Vai trò là bắt buộc',
+            EC: '1',
+            DT: [],
+         };
+      }
+      if (data.password) {
+         data.password = hashUserPassword(data.password);
+      }
       const user = await db.User.create(data);
       if (!user) {
          return {
             EM: 'create user fail',
-            EC: '0',
+            EC: '1',
             DT: [],
          };
       }
@@ -85,6 +105,13 @@ const updateUser = async (id, data) => {
          };
       }
 
+      // Xử lý mật khẩu trước khi kiểm tra thay đổi
+      if (data.password) {
+         data.password = hashUserPassword(data.password);
+      } else {
+         delete data.password;
+      }
+
       // Kiểm tra nếu dữ liệu gửi lên giống với dữ liệu hiện có
       let nothingToUpdate = true;
       for (const key in data) {
@@ -102,7 +129,7 @@ const updateUser = async (id, data) => {
          };
       }
 
-      // Thực hiện update nếu có thay đổi
+      // Thực hiện bộ update
       const [affectedRows] = await db.User.update(data, {
          where: { user_id: id },
       });
