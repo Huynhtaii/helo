@@ -109,6 +109,41 @@ const deleteOrder = async (req, res) => {
       });
    }
 };
+const cancelOrder = async (req, res) => {
+   try {
+      const { id } = req.params;
+      // Kiểm tra đơn hàng có ở trạng thái Pending không
+      const order = await orderService.getOrderById(id);
+      if (order.EC !== '0' || !order.DT) {
+         return res.status(404).json({
+            EM: 'Không tìm thấy đơn hàng',
+            EC: '-1',
+            DT: '',
+         });
+      }
+
+      if (order.DT.status !== 'Pending') {
+         return res.status(400).json({
+            EM: 'Chỉ có thể hủy đơn hàng đang chờ xử lý',
+            EC: '-1',
+            DT: '',
+         });
+      }
+      const data = await orderService.updateOrderStatus(id, 'Canceled', null);
+      return res.status(200).json({
+         EM: data.EM,
+         EC: data.EC,
+         DT: data.DT,
+      });
+   } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+         EM: 'error from server',
+         EC: '-1',
+         DT: '',
+      });
+   }
+};
 export default {
    getAllOrders,
    getOrderById,
@@ -116,4 +151,5 @@ export default {
    updateOrder,
    deleteOrder,
    updateOrderStatus,
+   cancelOrder,
 };

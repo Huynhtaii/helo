@@ -32,7 +32,11 @@ module.exports = (sequelize, DataTypes) => {
          description: DataTypes.TEXT,
          price: DataTypes.DECIMAL(10, 2),
          discount_price: DataTypes.DECIMAL(10, 2),
-         rating: DataTypes.INTEGER, // Có thể chuyển thành DECIMAL nếu cần chính xác
+         rating: DataTypes.INTEGER,
+         review_count: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+         },
          created_at: {
             type: DataTypes.DATE,
             allowNull: false,

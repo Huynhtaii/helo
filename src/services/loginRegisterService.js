@@ -121,13 +121,17 @@ const getInforAccount = async (id) => {
                      include: [
                         {
                            model: db.Product,
-                           attributes: ['name', 'description', 'price', 'discount_price']
-                        }
-                     ]
-                  }
-               ]
-            }
-         ]
+                           attributes: ['name', 'description', 'price', 'discount_price'],
+                        },
+                     ],
+                  },
+                  {
+                     model: db.Payment,
+                     attributes: ['status', 'payment_method', 'amount'],
+                  },
+               ],
+            },
+         ],
       });
 
       if (!data) {
@@ -151,7 +155,7 @@ const getInforAccount = async (id) => {
          DT: null,
       };
    }
-}
+};
 const updateInforAccount = async (id, data) => {
    try {
       const user = await db.User.findByPk(id);
@@ -166,11 +170,7 @@ const updateInforAccount = async (id, data) => {
       const { name, phone, address } = data;
 
       // Kiểm tra dữ liệu có thay đổi hay không
-      if (
-         name === user.name &&
-         phone === user.phone &&
-         address === user.address
-      ) {
+      if (name === user.name && phone === user.phone && address === user.address) {
          return {
             EM: 'Nothing to update',
             EC: '0',
@@ -199,8 +199,6 @@ const updateInforAccount = async (id, data) => {
       };
    }
 };
-
-
 
 export default {
    handleRegister,

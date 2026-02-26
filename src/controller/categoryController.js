@@ -35,7 +35,8 @@ const getCategoryById = async (req, res) => {
 };
 const createCategory = async (req, res) => {
    try {
-      const { name, description, image } = req.body;
+      const { name, description } = req.body;
+      const image = req.file ? `${process.env.SERVER_URL}/uploads/category/${req.file.filename}` : req.body.image || '';
       let category = await categoryService.createCategory({ name, description, image });
       return res.status(200).json({
          EM: category.EM,
@@ -53,8 +54,13 @@ const createCategory = async (req, res) => {
 const updateCategory = async (req, res) => {
    try {
       const { id } = req.params;
-      const { name, description, image } = req.body;
-      let category = await categoryService.updateCategory(id, { name, description, image });
+      const { name, description } = req.body;
+      const image = req.file
+         ? `${req.protocol}://${req.get('host')}/uploads/category/${req.file.filename}`
+         : req.body.image || undefined;
+      const data = { name, description };
+      if (image !== undefined) data.image = image;
+      let category = await categoryService.updateCategory(id, data);
       return res.status(200).json({
          EM: category.EM,
          EC: category.EC,
@@ -68,6 +74,7 @@ const updateCategory = async (req, res) => {
       });
    }
 };
+
 const deleteCategory = async (req, res) => {
    try {
       const { id } = req.params;

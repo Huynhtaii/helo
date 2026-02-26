@@ -105,7 +105,7 @@ const createProduct = async (req, res) => {
       const product = req.body;
       // Nếu có file ảnh, tạo URL và thêm vào product
       if (req.files && req.files.length > 0) {
-         const imageUrls = req.files.map((file) => `http://localhost:6969/uploads/product/${file.filename}`);
+         const imageUrls = req.files.map((file) => `${process.env.SERVER_URL}/uploads/product/${file.filename}`);
          product.imageUrls = imageUrls;
       } else {
          return res.status(400).json({
@@ -162,7 +162,7 @@ const updateProduct = async (req, res) => {
 
       // Nếu có file ảnh, tạo URL và thêm vào product
       if (req.files && req.files.length > 0) {
-         const imageUrls = req.files.map((file) => `http://localhost:6969/uploads/product/${file.filename}`);
+         const imageUrls = req.files.map((file) => `${process.env.SERVER_URL}/uploads/product/${file.filename}`);
          product.imageUrls = imageUrls;
       }
 

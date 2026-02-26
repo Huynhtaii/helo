@@ -4,6 +4,7 @@ import productController from '../controller/productController';
 import categoryController from '../controller/categoryController';
 import orderController from '../controller/orderController';
 import { upload } from '../middleware/uploadImage';
+import { uploadCategory } from '../middleware/uploadCategoryImage';
 import roleCotroller from '../controller/roleController';
 import loginRegisterController from '../controller/loginRegisterController';
 import jwtAction from '../middleware/jwtAction';
@@ -12,6 +13,7 @@ import messageController from '../controller/messageController';
 import paymentController from '../controller/paymentController';
 import aiController from '../controller/aiController';
 import brandController from '../controller/brandController';
+import feedbackController from '../controller/feedbackController';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
@@ -54,6 +56,8 @@ const initAPIRoutes = (app) => {
 
    // Order Routes
    router.post('/create/order', jwtAction.checkUserJWT, orderController.createOrder);
+   router.put('/cancel/order/:id', jwtAction.checkUserJWT, orderController.cancelOrder);
+   router.post('/create/feedback', jwtAction.checkUserJWT, feedbackController.createFeedback);
 
    // ADMIN ROUTES
    router.get('/read-all/users', jwtAction.checkUserJWT, userController.getAllUsers);
@@ -70,8 +74,18 @@ const initAPIRoutes = (app) => {
    );
    router.delete('/delete/product/:id', jwtAction.checkUserJWT, productController.deleteProduct);
 
-   router.post('/create/category', jwtAction.checkUserJWT, categoryController.createCategory);
-   router.put('/update/category/:id', jwtAction.checkUserJWT, categoryController.updateCategory);
+   router.post(
+      '/create/category',
+      jwtAction.checkUserJWT,
+      uploadCategory.single('image'),
+      categoryController.createCategory,
+   );
+   router.put(
+      '/update/category/:id',
+      jwtAction.checkUserJWT,
+      uploadCategory.single('image'),
+      categoryController.updateCategory,
+   );
    router.delete('/delete/category/:id', jwtAction.checkUserJWT, categoryController.deleteCategory);
 
    router.get('/read-all/orders', jwtAction.checkUserJWT, orderController.getAllOrders);

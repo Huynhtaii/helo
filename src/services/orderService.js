@@ -251,15 +251,18 @@ const updateOrderStatus = async (id, status, paymentStatus) => {
       }
 
       // Gửi email thông báo
-      const orderDetails = {
-         order_id: order.order_id,
-         nameProduct: order.order_items.map((item) => item.Product.name).join(', '),
-         order_date: order.order_date,
-         total_amount: order.total_amount,
-         status: status,
-      };
+      if (order.User && order.User.email) {
+         const orderDetails = {
+            order_id: order.order_id,
+            nameProduct: order.order_items?.map((item) => item.Product?.name || 'Sản phẩm').join(', ') || 'Đơn hàng',
+            quantity: order.order_items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
+            order_date: order.order_date,
+            total_amount: order.total_amount,
+            status: status,
+         };
 
-      await emailService.sendOrderStatusUpdate(order.User.email, orderDetails, status);
+         await emailService.sendOrderStatusUpdate(order.User.email, orderDetails, status);
+      }
 
       return {
          EM: 'Update order status success',
