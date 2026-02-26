@@ -74,9 +74,9 @@ const updateOrder = async (req, res) => {
 const updateOrderStatus = async (req, res) => {
    try {
       const { id } = req.params;
-      const { status } = req.body; 
-      
-      const data = await orderService.updateOrderStatus(id, status);
+      const { status, payment_status } = req.body;
+
+      const data = await orderService.updateOrderStatus(id, status, payment_status);
       return res.status(200).json({
          EM: data.EM,
          EC: data.EC,

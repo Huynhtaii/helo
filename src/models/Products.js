@@ -9,6 +9,8 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: 'products_product_id',
             timestamps: false,
          });
+         // Liên kết với Brand (n-1)
+         Product.belongsTo(models.Brand, { foreignKey: 'brand_id', as: 'brand' });
          // Liên kết với ProductImage (1-n)
          Product.hasMany(models.ProductImage, { foreignKey: 'product_id' });
          // Liên kết với OrderItem (1-n)

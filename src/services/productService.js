@@ -11,6 +11,11 @@ const getAllProducts = async (limit) => {
             {
                model: db.Category,
             },
+            {
+               model: db.Brand,
+               as: 'brand',
+               attributes: ['brand_id', 'name', 'logo_url', 'country'],
+            },
          ],
       };
 
@@ -51,6 +56,11 @@ const getProductById = async (id) => {
             },
             {
                model: db.Category,
+            },
+            {
+               model: db.Brand,
+               as: 'brand',
+               attributes: ['brand_id', 'name', 'logo_url', 'country'],
             },
          ],
       });
@@ -242,14 +252,16 @@ const createProduct = async (product) => {
          );
 
          // Tạo bản ghi trong product_images
-         if (product.imageUrl) {
-            await db.ProductImage.create(
-               {
-                  url: product.imageUrl,
-                  product_id: newProduct.product_id,
-               },
-               { transaction: t },
-            );
+         if (product.imageUrls && product.imageUrls.length > 0) {
+            for (const url of product.imageUrls) {
+               await db.ProductImage.create(
+                  {
+                     url: url,
+                     product_id: newProduct.product_id,
+                  },
+                  { transaction: t },
+               );
+            }
          }
 
          if (product.category_id) {
@@ -339,20 +351,37 @@ const updateProduct = async (id, data) => {
             transaction: t,
          });
 
-         // Nếu có ảnh mới, xóa ảnh cũ và thêm ảnh mới
-         if (data.imageUrl) {
-            await db.ProductImage.destroy({
-               where: { product_id: id },
-               transaction: t,
-            });
+         // Xử lý cập nhật ảnh: chỉ xóa những ảnh KHÔNG có trong keptImageIds và thêm ảnh mới
+         if (data.keptImageIds || (data.imageUrls && data.imageUrls.length > 0)) {
+            // Nếu có danh sách giữ lại, xóa những ảnh không được giữ
+            if (data.keptImageIds) {
+               await db.ProductImage.destroy({
+                  where: {
+                     product_id: id,
+                     product_image_id: { [Op.notIn]: data.keptImageIds },
+                  },
+                  transaction: t,
+               });
+            } else if (data.imageUrls && data.imageUrls.length > 0) {
+               // Nếu không có danh sách giữ lại nhưng có ảnh mới (trường hợp cũ), xóa hết ảnh cũ
+               await db.ProductImage.destroy({
+                  where: { product_id: id },
+                  transaction: t,
+               });
+            }
 
-            await db.ProductImage.create(
-               {
-                  url: data.imageUrl,
-                  product_id: id,
-               },
-               { transaction: t },
-            );
+            // Thêm các ảnh mới nếu có
+            if (data.imageUrls && data.imageUrls.length > 0) {
+               for (const url of data.imageUrls) {
+                  await db.ProductImage.create(
+                     {
+                        url: url,
+                        product_id: id,
+                     },
+                     { transaction: t },
+                  );
+               }
+            }
          }
 
          // Cập nhật category_id nếu hợp lệ

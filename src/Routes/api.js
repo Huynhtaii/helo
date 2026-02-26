@@ -10,10 +10,17 @@ import jwtAction from '../middleware/jwtAction';
 import cartController from '../controller/cartController';
 import messageController from '../controller/messageController';
 import paymentController from '../controller/paymentController';
+import aiController from '../controller/aiController';
+import brandController from '../controller/brandController';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
    // PUBLIC ROUTES (không cần đăng nhập)
+   router.post('/ai/consult', aiController.consultAI);
+   router.get('/ai/history', aiController.getChatHistory);
+   // Brand Public Routes
+   router.get('/read-all/brands', brandController.getAllBrands);
+   router.get('/brand/:id', brandController.getBrandById);
    router.get('/read-all/products', productController.getAllProducts);
    router.get('/recent-products', productController.getResentProducts);
    router.get('/product/:id', productController.getProductById);
@@ -54,8 +61,13 @@ const initAPIRoutes = (app) => {
    router.put('/update/user/:id', jwtAction.checkUserJWT, userController.updateUser);
    router.delete('/delete/user/:id', jwtAction.checkUserJWT, userController.deleteUser);
 
-   router.post('/create/product', jwtAction.checkUserJWT, upload.single('images'), productController.createProduct);
-   router.put('/update/product/:id', jwtAction.checkUserJWT, productController.updateProduct);
+   router.post('/create/product', jwtAction.checkUserJWT, upload.array('images', 10), productController.createProduct);
+   router.put(
+      '/update/product/:id',
+      jwtAction.checkUserJWT,
+      upload.array('images', 10),
+      productController.updateProduct,
+   );
    router.delete('/delete/product/:id', jwtAction.checkUserJWT, productController.deleteProduct);
 
    router.post('/create/category', jwtAction.checkUserJWT, categoryController.createCategory);
@@ -67,6 +79,11 @@ const initAPIRoutes = (app) => {
    router.delete('/delete/order/:id', jwtAction.checkUserJWT, orderController.deleteOrder);
 
    router.get('/read-all/roles', jwtAction.checkUserJWT, roleCotroller.getAllRoles);
+
+   // Brand Admin Routes
+   router.post('/create/brand', jwtAction.checkUserJWT, brandController.createBrand);
+   router.put('/update/brand/:id', jwtAction.checkUserJWT, brandController.updateBrand);
+   router.delete('/delete/brand/:id', jwtAction.checkUserJWT, brandController.deleteBrand);
 
    return app.use('/api/v1/', router);
 };

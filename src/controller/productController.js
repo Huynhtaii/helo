@@ -104,9 +104,9 @@ const createProduct = async (req, res) => {
    try {
       const product = req.body;
       // Nếu có file ảnh, tạo URL và thêm vào product
-      if (req.file) {
-         const imageUrl = `http://localhost:6969/uploads/product/${req.file.filename}`;
-         product.imageUrl = imageUrl;
+      if (req.files && req.files.length > 0) {
+         const imageUrls = req.files.map((file) => `http://localhost:6969/uploads/product/${file.filename}`);
+         product.imageUrls = imageUrls;
       } else {
          return res.status(400).json({
             EM: 'Vui lòng upload ảnh sản phẩm!',
@@ -129,7 +129,7 @@ const createProduct = async (req, res) => {
          EC: data.EC,
          DT: {
             product: data.DT,
-            imageUrl: product.imageUrl,
+            imageUrls: product.imageUrls,
          },
       });
    } catch (error) {
@@ -152,11 +152,18 @@ const updateProduct = async (req, res) => {
       if (product.rating) product.rating = parseInt(product.rating);
       if (product.brand_id) product.brand_id = parseInt(product.brand_id);
       if (product.category_id) product.category_id = parseInt(product.category_id);
+      if (product.keptImageIds) {
+         try {
+            product.keptImageIds = JSON.parse(product.keptImageIds);
+         } catch (e) {
+            product.keptImageIds = [];
+         }
+      }
 
       // Nếu có file ảnh, tạo URL và thêm vào product
-      if (req.file) {
-         const imageUrl = `http://localhost:6969/uploads/product/${req.file.filename}`;
-         product.imageUrl = imageUrl;
+      if (req.files && req.files.length > 0) {
+         const imageUrls = req.files.map((file) => `http://localhost:6969/uploads/product/${file.filename}`);
+         product.imageUrls = imageUrls;
       }
 
       const data = await productService.updateProduct(id, product);
