@@ -62,6 +62,16 @@ const getProductById = async (id) => {
                as: 'brand',
                attributes: ['brand_id', 'name', 'logo_url', 'country'],
             },
+            {
+               model: db.Feedback,
+               as: 'Feedbacks',
+               include: [
+                  {
+                     model: db.User,
+                     attributes: ['name'],
+                  },
+               ],
+            },
          ],
       });
       if (!product) {

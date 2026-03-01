@@ -112,12 +112,14 @@ const getInforAccount = async (id) => {
             {
                model: db.Order,
                as: 'orders',
+               separate: true,
+               order: [['order_date', 'DESC']],
                attributes: ['order_id', 'order_date', 'status', 'total_amount'],
                include: [
                   {
                      model: db.OrderItem,
                      as: 'order_items',
-                     attributes: ['quantity', 'price'],
+                     attributes: ['product_id', 'quantity', 'price'],
                      include: [
                         {
                            model: db.Product,
@@ -128,6 +130,11 @@ const getInforAccount = async (id) => {
                   {
                      model: db.Payment,
                      attributes: ['status', 'payment_method', 'amount'],
+                  },
+                  {
+                     model: db.Feedback,
+                     as: 'Feedbacks',
+                     attributes: ['feedback_id', 'rating', 'comments'],
                   },
                ],
             },
